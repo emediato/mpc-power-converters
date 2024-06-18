@@ -61,16 +61,18 @@ void App()
 	// xk = K * Iabc
 	matrixMultiply(&K, &Iabc, &xk);
 
+	// Calculate best combination
+	unsigned int bestCombination = selectBestCombination();
+	memcpy(uk.data, switch_state[bestCombination], 3 * sizeof(float));
+
+
 	if (kindex < 198)
 	{
 		ialfa[kindex] = (int) 1000 * xkdata[0];
 		ibeta[kindex] = (int) 1000 * xkdata[1];
+		switch_all[kindex] = bestCombination;
 	}
 	kindex++;
-
-	// Calculate best combination
-	unsigned int bestCombination = selectBestCombination();
-	memcpy(uk.data, switch_state[bestCombination], 3 * sizeof(float));
 }
 
 

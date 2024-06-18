@@ -1,3 +1,0 @@
-/Users/monica/CLionProjects/MPCv1/cmake-build-debug/CMakeFiles/MPCv1.dir
-/Users/monica/CLionProjects/MPCv1/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/monica/CLionProjects/MPCv1/cmake-build-debug/CMakeFiles/rebuild_cache.dir

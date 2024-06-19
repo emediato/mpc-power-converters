@@ -47,6 +47,7 @@ const float switch_state[NumberOfStates][3] = {
     {1, 0, 0},  // 4
     {1, 1, 0},  // 5
     {1, 0, 1}   // 6
+
 };
 
 unsigned int selectBestCombination();

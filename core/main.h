@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
+// #include "stm32f1xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,6 +47,23 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+#include <stdio.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stddef.h>
+#include <string.h>
+
+extern uint16_t adcRawValues[2];
+
+
+extern volatile int kindex;
+extern int ialfa[200];
+extern int ibeta[200];
+extern int switch_all[200];
+
+
+extern void App();
+unsigned int selectBestCombination();
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

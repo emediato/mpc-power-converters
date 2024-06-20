@@ -12,11 +12,16 @@
 #include <string.h>
 
 extern uint16_t adcRawValues[2];
-extern void app();
+
+
 extern volatile int kindex;
 extern int ialfa[200];
 extern int ibeta[200];
-extern int acabou;
+extern int switch_all[200];
+
+
+extern void App();
+unsigned int selectBestCombination();
 
 
 #endif //APP_H

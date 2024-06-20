@@ -16,7 +16,7 @@ extern "C" {
  *
  * @warning Please do not use struct objects.
  */
-typedef uint32_t matrix_type;
+typedef int32_t matrix_type;
 
 /**
  * The matrix core object.
@@ -71,14 +71,14 @@ void matrixSubtract(const matrix_t* left, const matrix_t* right, matrix_t* resul
  *
  * @warning It only supports vectors for the moment.
  */
-float matrixNorm2_2(const matrix_t* matrix);
+matrix_type matrixNorm2_2(const matrix_t* matrix);
 
 /**
  * Calculates sqrt(matrix * matrix).
  *
  * @warning It only supports vectors for the moment.
  */
-float matrixNorm2(const matrix_t* matrix);
+matrix_type matrixNorm2(const matrix_t* matrix);
 
 #ifdef __cplusplus
 }

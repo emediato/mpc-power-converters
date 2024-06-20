@@ -1,5 +1,5 @@
-#ifndef QUARK_UTILS_MATRIX_H
-#define QUARK_UTILS_MATRIX_H
+#ifndef MATRIX_H
+#define MATRIX_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -59,4 +59,4 @@ float matrixNorm2(const Matrix_t* matrix);
 }
 #endif
 
-#endif //QUARK_UTILS_MATRIX_H
+#endif //MATRIX_H

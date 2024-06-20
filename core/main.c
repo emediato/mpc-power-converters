@@ -29,14 +29,14 @@ float idata[3*1];
 
 int ialfa[200]; int ibeta[200];
 
-Matrix_t A = {2, 2, Adata};
-Matrix_t B = {2, 3, Bdata};
-Matrix_t K = {2, 3, Kdata};
-Matrix_t Iabc = {3, 1, idata};
+matrix_t A = {2, 2, Adata};
+matrix_t B = {2, 3, Bdata};
+matrix_t K = {2, 3, Kdata};
+matrix_t Iabc = {3, 1, idata};
 
-Matrix_t xk = {2, 1, xkdata};
-Matrix_t uk = {3, 1, ukdata};
-Matrix_t x_ref = {2, 1, xrefdata};
+matrix_t xk = {2, 1, xkdata};
+matrix_t uk = {3, 1, ukdata};
+matrix_t x_ref = {2, 1, xrefdata};
 
 #define NumberOfStates 7
 const float switch_state[NumberOfStates][3] = {
@@ -134,16 +134,16 @@ unsigned int selectBestCombination() {
 	float lambda = 0.01;   // switch
 
 	float g_idata[2*1]= {0, 0};
-	Matrix_t g_i = {2, 1, g_idata};
+	matrix_t g_i = {2, 1, g_idata};
 
 	float g_udata[1*3]= {0, 0, 0};
-	Matrix_t g_u = {3, 1, g_udata};
+	matrix_t g_u = {3, 1, g_udata};
 
 	float x_pdata[2 * 1] = { 0, 0 };
-	Matrix_t x_p = { 2, 1, x_pdata };
+	matrix_t x_p = {2, 1, x_pdata };
 
 	float u_pdata[3 * 1] = { 0, 0, 0 };
-	Matrix_t u_p = { 3, 1, u_pdata };
+	matrix_t u_p = {3, 1, u_pdata };
 
 	float min_g = 1000000.0;
 	int min_index = 0;

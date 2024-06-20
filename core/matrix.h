@@ -8,11 +8,24 @@
 extern "C" {
 #endif
 
-typedef struct Matrix {
+/**
+ * Define here the matrix type. Common choices are:
+ * - int32_t
+ * - float
+ * - double
+ *
+ * @warning Please do not use struct objects.
+ */
+typedef uint32_t matrix_type;
+
+/**
+ * The matrix core object.
+ */
+typedef struct {
     uint16_t rows;
     uint16_t cols;
-    float *data;
-} Matrix_t;
+    matrix_type *data;
+} matrix_t;
 
 // Dynamic allocation
 #if defined(INC_FREERTOS_H)
@@ -25,35 +38,47 @@ typedef struct Matrix {
 
 #define matrixElement(m, r, c)  (m)->data[(m)->cols * r + c]
 
-Matrix_t* matrixNew(uint16_t rows, uint16_t cols);
+matrix_t* matrixNew(uint16_t rows, uint16_t cols);
 
-void matrixMultiply(const Matrix_t *left, const Matrix_t *right, Matrix_t *result);
+void matrixMultiply(const matrix_t *left, const matrix_t *right, matrix_t *result);
 
-void matrixMultiplyAddingToResult(const Matrix_t *left, const Matrix_t *right, Matrix_t *result);
+void matrixMultiplyAddingToResult(const matrix_t *left, const matrix_t *right, matrix_t *result);
+
+void matrixMultiplyByScalar(const matrix_t* matrix, matrix_type scalar, matrix_t* result);
+
+void matrixDivideByScalar(const matrix_t* matrix, matrix_type scalar, matrix_t* result);
 
 /**
  * Implements result = left + right
  */
-void matrixSum(const Matrix_t *left, const Matrix_t *right, Matrix_t* result);
+void matrixSum(const matrix_t *left, const matrix_t *right, matrix_t* result);
+
+/**
+ * Implements result = matrix + scalar
+ * @param matrix is a valid pointer to a matrix_t object.
+ * @param scalar is the scalar to be added to the matrix.
+ * @param result is a valid pointer to a matrix_t object.
+ */
+void matrxSumScalar(const matrix_t* matrix, matrix_type scalar, matrix_t* result);
 
 /**
  * Implements result = left - right
  */
-void matrixSubtract(const Matrix_t* left, const Matrix_t* right, Matrix_t* result);
+void matrixSubtract(const matrix_t* left, const matrix_t* right, matrix_t* result);
 
 /**
  * Calculates matrix * matrix.
  *
  * @warning It only supports vectors for the moment.
  */
-float matrixNorm2_2(const Matrix_t* matrix);
+float matrixNorm2_2(const matrix_t* matrix);
 
 /**
  * Calculates sqrt(matrix * matrix).
  *
  * @warning It only supports vectors for the moment.
  */
-float matrixNorm2(const Matrix_t* matrix);
+float matrixNorm2(const matrix_t* matrix);
 
 #ifdef __cplusplus
 }

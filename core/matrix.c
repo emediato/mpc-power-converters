@@ -2,10 +2,10 @@
 #include <string.h>
 #include <math.h>
 
-Matrix_t* matrixNew(uint16_t rows, uint16_t cols)
+matrix_t* matrixNew(uint16_t rows, uint16_t cols)
 {
-    float* data = matrixAlloc(sizeof(float) * rows * cols);
-    Matrix_t* matrix = matrixAlloc(sizeof(Matrix_t));
+    matrix_type* data = matrixAlloc(sizeof(matrix_type) * rows * cols);
+    matrix_t* matrix = matrixAlloc(sizeof(matrix_t));
     if ((matrix != NULL) && (data != NULL))
     {
         matrix->rows = rows;
@@ -22,21 +22,21 @@ Matrix_t* matrixNew(uint16_t rows, uint16_t cols)
     return matrix;
 }
 
-void matrixMultiply(const Matrix_t *left, const Matrix_t* right, Matrix_t* result)
+void matrixMultiply(const matrix_t *left, const matrix_t* right, matrix_t* result)
 {
     const uint32_t resultNbOfElements = result->rows * result->cols;
 
     if ((left == result) || (right == result))
     {
         // Try to create an auxiliary matrix
-        Matrix_t* aux = matrixNew(result->rows, result->cols);
+        matrix_t* aux = matrixNew(result->rows, result->cols);
 
         // If successful, then proceed
         if (aux != NULL)
         {
             // Fill aux matrix with zeros, i.e.,
             // aux = 0
-            memset(aux->data, 0, sizeof(float) * resultNbOfElements);
+            memset(aux->data, 0, sizeof(matrix_type) * resultNbOfElements);
 
             // Calculate
             // aux = left * right
@@ -44,7 +44,7 @@ void matrixMultiply(const Matrix_t *left, const Matrix_t* right, Matrix_t* resul
 
             // Copy the result from aux, i.e.,
             // result = aux
-            memcpy(result->data, aux->data, sizeof(float) * resultNbOfElements);
+            memcpy(result->data, aux->data, sizeof(matrix_type) * resultNbOfElements);
 
             // Free the allocated memory
             matrixFree(aux->data);
@@ -53,12 +53,12 @@ void matrixMultiply(const Matrix_t *left, const Matrix_t* right, Matrix_t* resul
     }
     else
     {
-        memset(result->data, 0, sizeof(float) * resultNbOfElements);
+        memset(result->data, 0, sizeof(matrix_type) * resultNbOfElements);
         matrixMultiplyAddingToResult(left, right, result);
     }
 }
 
-void matrixMultiplyAddingToResult(const Matrix_t *left, const Matrix_t* right, Matrix_t* result)
+void matrixMultiplyAddingToResult(const matrix_t *left, const matrix_t* right, matrix_t* result)
 {
     uint16_t row, col, i;
     uint16_t resultIndex, leftIndex;
@@ -77,7 +77,19 @@ void matrixMultiplyAddingToResult(const Matrix_t *left, const Matrix_t* right, M
     }
 }
 
-void matrixMinus(Matrix_t* m)
+void matrixMultiplyByScalar(const matrix_t* matrix, const matrix_type scalar, matrix_t* result)
+{
+    for (uint16_t element = 0; element < (matrix->rows * matrix->cols); element++)
+        result->data[element] = matrix->data[element] * scalar;
+}
+
+void matrixDivideByScalar(const matrix_t* matrix, const matrix_type scalar, matrix_t* result)
+{
+    for (uint16_t element = 0; element < (matrix->rows * matrix->cols); element++)
+        result->data[element] = matrix->data[element] / scalar;
+}
+
+void matrixMinus(matrix_t* m)
 {
     uint16_t row, col;
     for (row = 0; row < m->rows; row++)
@@ -89,7 +101,7 @@ void matrixMinus(Matrix_t* m)
     }
 }
 
-void matrixSum(const Matrix_t* left, const Matrix_t* right, Matrix_t* result)
+void matrixSum(const matrix_t* left, const matrix_t* right, matrix_t* result)
 {
     uint16_t element;
 
@@ -102,7 +114,13 @@ void matrixSum(const Matrix_t* left, const Matrix_t* right, Matrix_t* result)
     }
 }
 
-void matrixSubtract(const Matrix_t* left, const Matrix_t* right, Matrix_t* result)
+void matrxSumScalar(const matrix_t* matrix, const matrix_type scalar, matrix_t* result)
+{
+    for (uint16_t element = 0; element < (matrix->rows * matrix->cols); element++)
+        result->data[element] = matrix->data[element] + scalar;
+}
+
+void matrixSubtract(const matrix_t* left, const matrix_t* right, matrix_t* result)
 {
     uint16_t element;
 
@@ -112,16 +130,16 @@ void matrixSubtract(const Matrix_t* left, const Matrix_t* right, Matrix_t* resul
     }
 }
 
-float matrixNorm2_2(const Matrix_t* matrix)
+matrix_type matrixNorm2_2(const matrix_t* matrix)
 {
-    float norm = 0;
+    matrix_type norm = 0;
     for (uint16_t element = 0; element < (matrix->rows * matrix->cols); element++)
         norm = norm + matrix->data[element] * matrix->data[element];
 
     return norm;
 }
 
-float matrixNorm2(const Matrix_t* matrix)
+matrix_type matrixNorm2(const matrix_t* matrix)
 {
     return sqrt(matrixNorm2_2(matrix));
 }

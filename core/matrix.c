@@ -2,7 +2,7 @@
 #include <string.h>
 #include <math.h>
 
-matrix_t* matrixNew(uint16_t rows, uint16_t cols)
+matrix_t* matrixNew(uint16_t rows, uint16_t cols, matrix_type base)
 {
     matrix_type* data = matrixAlloc(sizeof(matrix_type) * rows * cols);
     matrix_t* matrix = matrixAlloc(sizeof(matrix_t));
@@ -11,6 +11,7 @@ matrix_t* matrixNew(uint16_t rows, uint16_t cols)
         matrix->rows = rows;
         matrix->cols = cols;
         matrix->data = data;
+        matrix->base = base;
     }
     else
     {
@@ -29,7 +30,7 @@ void matrixMultiply(const matrix_t *left, const matrix_t* right, matrix_t* resul
     if ((left == result) || (right == result))
     {
         // Try to create an auxiliary matrix
-        matrix_t* aux = matrixNew(result->rows, result->cols);
+        matrix_t* aux = matrixNew(result->rows, result->cols, left->base);
 
         // If successful, then proceed
         if (aux != NULL)
@@ -61,7 +62,7 @@ void matrixMultiply(const matrix_t *left, const matrix_t* right, matrix_t* resul
 void matrixMultiplyAddingToResult(const matrix_t *left, const matrix_t* right, matrix_t* result)
 {
     uint16_t row, col, i;
-    uint16_t resultIndex, leftIndex;
+    uint16_t resultIndex, leftIndex, rightIndex;
 
     for (row = 0; row < left->rows; row++)
     {
@@ -71,7 +72,8 @@ void matrixMultiplyAddingToResult(const matrix_t *left, const matrix_t* right, m
             resultIndex = result->cols * row + col;
             for (i = 0; i < left->cols; i++)
             {
-                result->data[resultIndex] += left->data[leftIndex + i] * right->data[right->cols * i + col];
+                rightIndex = right->cols * i + col;
+                result->data[resultIndex] += (left->data[leftIndex + i] * right->data[rightIndex]) / left->base;
             }
         }
     }
@@ -134,7 +136,7 @@ matrix_type matrixNorm2_2(const matrix_t* matrix)
 {
     matrix_type norm = 0;
     for (uint16_t element = 0; element < (matrix->rows * matrix->cols); element++)
-        norm = norm + matrix->data[element] * matrix->data[element];
+        norm = norm + (matrix->data[element] * matrix->data[element]) / matrix->base;
 
     return norm;
 }

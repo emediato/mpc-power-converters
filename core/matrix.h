@@ -19,19 +19,19 @@ extern "C" {
 typedef int32_t matrix_type;
 
 /**
+ * @brief Numeric base of the scalar.
+ * It means what integer number represents the real number 1.0. It is particularly useful when working with int32_t.
+ * For example, if 1024 was chosen as base, then 2048 means the real number 2.0.
+ */
+#define matrix_base 4096
+
+/**
  * The matrix core object.
  */
 typedef struct {
     uint16_t rows;
     uint16_t cols;
     matrix_type *data;
-
-    /**
-     * @brief Numeric base of the scalar.
-     * It means what integer number represents the real number 1.0. It is particularly useful when working with int32_t.
-     * For example, if 1024 was chosen as base, then 2048 means the real number 2.0.
-     */
-    matrix_type base;
 } matrix_t;
 
 // Dynamic allocation

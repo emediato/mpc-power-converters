@@ -1,29 +1,66 @@
 
 #include "app.h"
-#include "tim.h"
+//#include "tim.h"
 //#include "FreeRTOS.h"
+
+#define FRACTIONAL_BITS 12 // Q factor for fixed points
+#define SCALING_FACTOR ((fixed_point_t)1 << FRACTIONAL_BITS)
+#define ITERATIONS 20  // Number of iterations for the Taylor series
+#define SCALE_FACTOR 10000  // Scaling factor to manage large numbers
 
 
 uint16_t adcRawValues[2];
+
+float Ts = 1/1000; // seconds
+matrix_type Ts_fixed = float_to_fixed(Ts); // seconds
+float Vd = 60; // voltage
+matrix_type V_fixed = float_to_fixed(Vd);
+float R = 22+3; //   ohms
+float L = 0.10 ;
+float g_i_norm = 0.01;
+float min_g = 1000000.0;
+
+
+matrix_type g_i_fixed = float_to_fixed(g_i_norm);
+matrix_type min_g_fixed = float_to_fixed(min_g);
+matrix_type L_fixed = float_to_fixed(L); // henry
+
+matrix_type x_ref_fixed[2*2];
+matrix_type A_fixed[2*2] = { 0, 0, 0, 0};
+matrix_type Adata[2*2] = { 0, 0, 0, 0};
+matrix_type I_2_fixed[2*2];
+matrix_type I_2_data[2*2] = { 1, 0, 0, 1 };
+matrix_type F_data[2*2] = { 0, 0, 0, 0};
+matrix_type F_Ts_data[2*2] =  { 0, 0, 0, 0};
+matrix_type G_data[2*3] = { 0, 0, 0, 0, 0, 0};
+
+matrix_type Fdata_fixed[2 * 3];
+matrix_type K_fixed[2 * 3];
+matrix_type Bdata[2*3];
+matrix_type Bdata_fixed[2 * 3];
+
+
+float x_ref[2*1] = {.5 , .5} ;
+float Kdata[2*3] = {0.6667, -0.3333, -0.3333, 0, 0.5774, -0.5774 };
+
 
 float Adata[2*2] = {0.7985, 0, 0,  0.7985};
 float Bdata[2*3] = {0.1791, -0.0895, -0.0895, 0, 0.1551, -0.1551};
 float xkdata[2 * 1] = { 0.0, 0.0 };
 float ukdata[1*3] = { 0.0, 0.0, 0.0 };
 float xrefdata[2*1] = { 0.5, 0.5 };
-float Kdata[2*3] = {0.6667, -0.3333, -0.3333, 0 , 0.5774,-0.5774};
 float idata[3*1];
 
-int ialfa[200]; int ibeta[200]; int kindex;
+int ialfa[200]; int ibeta[200]; volatile int kindex;
 
-Matrix_t A = {2, 2, Adata};
-Matrix_t B = {2, 3, Bdata};
-Matrix_t K = {2, 3, Kdata};
-Matrix_t Iabc = {3, 1, idata};
+matrix_t A = {2, 2, Adata};
+matrix_t B = {2, 3, Bdata};
+matrix_t K = {2, 3, Kdata};
+matrix_t Iabc = {3, 1, idata};
 
-Matrix_t xk = {2, 1, xkdata};
-Matrix_t uk = {3, 1, ukdata};
-Matrix_t x_ref = {2, 1, xrefdata};
+matrix_t xk = {2, 1, xkdata};
+matrix_t uk = {3, 1, ukdata};
+matrix_t x_ref = {2, 1, xrefdata};
 
 #define NumberOfStates 7
 const float switch_state[NumberOfStates][3] = {
@@ -35,10 +72,6 @@ const float switch_state[NumberOfStates][3] = {
     {1, 1, 0},  // 5
     {1, 0, 1}   // 6
 };
-
-unsigned int selectBestCombination();
-void HAL_ADC_ConvCpltCallback();
-void App();
 
 void App()
 {
@@ -81,16 +114,16 @@ unsigned int selectBestCombination() {
 	float lambda = 0.01;   // switch
 
 	float g_idata[2*1]= {0, 0};
-	Matrix_t g_i = {2, 1, g_idata};
+	matrix_t g_i = {2, 1, g_idata};
 
 	float g_udata[1*3]= {0, 0, 0};
-	Matrix_t g_u = {3, 1, g_udata};
+	matrix_t g_u = {3, 1, g_udata};
 
 	float x_pdata[2 * 1] = { 0, 0 };
-	Matrix_t x_p = { 2, 1, x_pdata };
+	matrix_t x_p = { 2, 1, x_pdata };
 
 	float u_pdata[3 * 1] = { 0, 0, 0 };
-	Matrix_t u_p = { 3, 1, u_pdata };
+	matrix_t u_p = { 3, 1, u_pdata };
 
 	float min_g = 1000000.0;
 	int min_index = 0;
@@ -127,52 +160,3 @@ unsigned int selectBestCombination() {
 	return min_index;
 }
 
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-	Iabc.data[0] = 0.0090 * ((float) adcRawValues[1]) - 18.094;
-	Iabc.data[1] = 0.0095 * ((float) adcRawValues[0]) - 19.049;
-	Iabc.data[2] = Iabc.data[0] - Iabc.data[1];
-
-	// xk = K * Iabc
-	matrixMultiply(&K, &Iabc, &xk);
-
-	if (kindex < 198)
-	{
-		ialfa[kindex] = (int) 1000 * xkdata[0];
-		ibeta[kindex] = (int) 1000 * xkdata[1];
-	}
-	kindex++;
-
-	// Calculate best combination
-	unsigned int bestCombination = selectBestCombination();
-	memcpy(uk.data, switch_state[bestCombination], 3 * sizeof(float));
-
-	// First make sure all switches are turned off
-	HAL_GPIO_WritePin(DRIVE1_LOW_GPIO_Port, DRIVE1_LOW_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(DRIVE2_LOW_GPIO_Port, DRIVE2_LOW_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(DRIVE3_LOW_GPIO_Port, DRIVE3_LOW_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(DRIVE1_HIGH_GPIO_Port, DRIVE1_HIGH_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(DRIVE2_HIGH_GPIO_Port, DRIVE2_HIGH_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(DRIVE3_HIGH_GPIO_Port, DRIVE3_HIGH_Pin, GPIO_PIN_RESET);
-
-	// Dead time
-	//	int i = 100;
-	//	while (i > 1) { i--; }
-	delayUs(2);
-
-	if (switch_state[bestCombination][0] > 0)
-		HAL_GPIO_WritePin(DRIVE1_HIGH_GPIO_Port, DRIVE1_HIGH_Pin, GPIO_PIN_SET);
-	else
-		HAL_GPIO_WritePin(DRIVE1_LOW_GPIO_Port, DRIVE1_LOW_Pin, GPIO_PIN_SET);
-
-	if (switch_state[bestCombination][1] > 0)
-		HAL_GPIO_WritePin(DRIVE2_HIGH_GPIO_Port, DRIVE2_HIGH_Pin, GPIO_PIN_SET);
-	else
-		HAL_GPIO_WritePin(DRIVE2_LOW_GPIO_Port, DRIVE2_LOW_Pin, GPIO_PIN_SET);
-
-	if (switch_state[bestCombination][2] > 0)
-		HAL_GPIO_WritePin(DRIVE3_HIGH_GPIO_Port, DRIVE3_HIGH_Pin, GPIO_PIN_SET);
-	else
-		HAL_GPIO_WritePin(DRIVE3_LOW_GPIO_Port, DRIVE3_LOW_Pin, GPIO_PIN_SET);
-}

@@ -21,7 +21,11 @@ extern int switch_all[200];
 
 
 extern void App();
-unsigned int selectBestCombination();
+extern unsigned int selectBestCombination();
 
+
+void App();
+void HAL_ADC_ConvCpltCallback();
+unsigned int selectBestCombination();
 
 #endif //APP_H

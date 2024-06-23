@@ -2,6 +2,29 @@
 #include <string.h>
 #include <math.h>
 
+// Function to convert floating-point to fixed-point (Q16 formatrix)
+inline fixed_point_t float_to_fixed(float value) {
+    return (fixed_point_t)round(value * SCALING_FACTOR);
+    //return (int32_t)(value * SCALING_FACTOR);
+}
+
+
+inline float fixed_to_float(fixed_point_t value){
+    return (float)value / (float)(1<< FRACTIONAL_BITS);
+}
+
+// Function to free matrix memory
+void freeMatrix(matrix_t *matrix) {
+    free(matrix->data);
+    matrix->data = NULL;
+}
+
+// Function to set a value in the matrix
+void setMatrixValue(matrix_t *matrix, uint16_t row, uint16_t col, matrix_type value) {
+    matrix->data[row * matrix->cols + col] = value;
+}
+
+
 matrix_t* matrixNew(uint16_t rows, uint16_t cols, matrix_type base)
 {
     matrix_type* data = matrixAlloc(sizeof(matrix_type) * rows * cols);
@@ -115,7 +138,7 @@ void matrixSum(const matrix_t* left, const matrix_t* right, matrix_t* result)
     }
 }
 
-void matrxSumScalar(const matrix_t* matrix, const matrix_type scalar, matrix_t* result)
+void matrixSumScalar(const matrix_t* matrix, const matrix_type scalar, matrix_t* result)
 {
     for (uint16_t element = 0; element < (matrix->rows * matrix->cols); element++)
         result->data[element] = matrix->data[element] + scalar;

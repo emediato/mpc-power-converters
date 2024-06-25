@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "matrix.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +44,12 @@ typedef struct {
 #define matrixFree(ptr)     free(ptr)
 #endif
 
+#define FRACTIONAL_BITS 12 // Q factor
+#define SCALING_FACTOR ((matrix_type)1 << FRACTIONAL_BITS)
+
 #define matrixElement(m, r, c)  (m)->data[(m)->cols * r + c]
+ inline float fixed_to_float(fixed_point_t value);
+ inline fixed_point_t float_to_fixed(float value);
 
 matrix_t* matrixNew(uint16_t rows, uint16_t cols, matrix_type base);
 

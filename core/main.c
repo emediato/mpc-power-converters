@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "main.h"
-// #include "app.h"
+#include "app.h"
 
 
 /* Private includes ----------------------------------------------------------*/
@@ -16,27 +16,15 @@
 #include "matrix.h"
 #include "time.h"
 
-
 uint16_t adcRawValues[2];
 
-float Adata[2*2] = {0.7985, 0, 0,  0.7985};
-float Bdata[2*3] = {0.1791, -0.0895, -0.0895, 0, 0.1551, -0.1551};
-float xkdata[2 * 1] = { 0.0, 0.0 };
-float ukdata[1*3] = { 0.0, 0.0, 0.0 };
-float xrefdata[2*1] = { 0.5, 0.5 };
-float Kdata[2*3] = {0.6667, -0.3333, -0.3333, 0 , 0.5774,-0.5774};
-float idata[3*1];
+
+int ialfa[200]; int ibeta[200]; int kindex; int switch_all[200];
+matrix_t Iabc;
 
 int ialfa[200]; int ibeta[200];
 
-matrix_t A = {2, 2, Adata};
-matrix_t B = {2, 3, Bdata};
-matrix_t K = {2, 3, Kdata};
-matrix_t Iabc = {3, 1, idata};
 
-matrix_t xk = {2, 1, xkdata};
-matrix_t uk = {3, 1, ukdata};
-matrix_t x_ref = {2, 1, xrefdata};
 
 #define NumberOfStates 7
 const float switch_state[NumberOfStates][3] = {
@@ -129,56 +117,6 @@ void App()
 }
 
 
-unsigned int selectBestCombination() {
-	float guk;
-	float lambda = 0.01;   // switch
-
-	float g_idata[2*1]= {0, 0};
-	matrix_t g_i = {2, 1, g_idata};
-
-	float g_udata[1*3]= {0, 0, 0};
-	matrix_t g_u = {3, 1, g_udata};
-
-	float x_pdata[2 * 1] = { 0, 0 };
-	matrix_t x_p = {2, 1, x_pdata };
-
-	float u_pdata[3 * 1] = { 0, 0, 0 };
-	matrix_t u_p = {3, 1, u_pdata };
-
-	float min_g = 1000000.0;
-	int min_index = 0;
-	float g_i_norm = 0.0;
-	float g_u_norm = 0.0;
-
-	for (unsigned int combination = 0; combination < NumberOfStates; ++combination)
-	{
-		// Get the actual combination to be tested
-		memcpy(u_p.data, switch_state[combination], 3 * sizeof(float));
-
-		// Predict the next system state using this control combination
-		// x_p = A * xk + B * u_p
-		matrixMultiply(&A, &xk, &x_p);                   // x_p = A * xk
-		matrixMultiplyAddingToResult(&B, &u_p, &x_p);    // x_p = x_p + B * u_p
-
-		// Calculate the deviation to the desired system state and normalize it
-		matrixSubtract(&x_ref, &x_p, &g_i);              // g_i = x_ref - x_p;
-		g_i_norm = matrixNorm2(&g_i);                    // g_i_norm = g_i.norm()
-
-		// Calculate how many switches changed
-		matrixSubtract(&u_p, &uk, &g_u);                 // g_u = u_p - uk;
-		g_u_norm = matrixNorm2_2(&g_u);
-
-		// Calculate the overall cost
-		guk = g_i_norm + g_u_norm * lambda;
-
-		if (guk < min_g )
-		{
-			min_g = guk;
-			min_index = combination;
-		}
-	}
-	return min_index;
-}
 //
 //
 // void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)

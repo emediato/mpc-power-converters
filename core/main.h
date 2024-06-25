@@ -28,6 +28,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 // #include "stm32f1xx_hal.h"
+#include "app.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -56,7 +57,6 @@ extern "C" {
 extern uint16_t adcRawValues[2];
 
 
-extern volatile int kindex;
 extern int ialfa[200];
 extern int ibeta[200];
 extern int switch_all[200];

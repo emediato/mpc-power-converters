@@ -23,9 +23,17 @@ extern int switch_all[200];
 extern void App();
 extern unsigned int selectBestCombination();
 
+#define NumberOfStates 7
 
-void App();
-void HAL_ADC_ConvCpltCallback();
-unsigned int selectBestCombination();
+extern uint16_t adcRawValues[2];
+
+extern matrix_t K;
+extern matrix_t xk;
+extern matrix_t uk;
+extern matrix_t x_ref;
+
+extern matrix_type xkdata[2 * 1];
+
+
 
 #endif //APP_H

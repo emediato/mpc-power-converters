@@ -3,75 +3,36 @@
 //#include "tim.h"
 //#include "FreeRTOS.h"
 
-#define FRACTIONAL_BITS 12 // Q factor for fixed points
-#define SCALING_FACTOR ((fixed_point_t)1 << FRACTIONAL_BITS)
-#define ITERATIONS 20  // Number of iterations for the Taylor series
-#define SCALE_FACTOR 10000  // Scaling factor to manage large numbers
+int k = 1;
 
 
-uint16_t adcRawValues[2];
+matrix_type idata[3*1];
+matrix_type Adata_fixed[2*2] = { 3190, 0, 0, 3190};
+matrix_type Bdata_fixed[2 * 3] = { 42199, -21096, -21096, 0, 36543, -36543};
+matrix_type Kdata_fixed[2 * 3] = { 2731, -1365, -1365, 0, 2365, -2365 };
+matrix_type xrefdata_fixed[2*1] = {20480, 20480};
+matrix_type xkdata[2 * 1] = { 0, 0 };
+matrix_type ukdata[1 * 3] = { 0, 0 };
 
-float Ts = 1/1000; // seconds
-matrix_type Ts_fixed = float_to_fixed(Ts); // seconds
-float Vd = 60; // voltage
-matrix_type V_fixed = float_to_fixed(Vd);
-float R = 22+3; //   ohms
-float L = 0.10 ;
-float g_i_norm = 0.01;
-float min_g = 1000000.0;
-
-
-matrix_type g_i_fixed = float_to_fixed(g_i_norm);
-matrix_type min_g_fixed = float_to_fixed(min_g);
-matrix_type L_fixed = float_to_fixed(L); // henry
-
-matrix_type x_ref_fixed[2*2];
-matrix_type A_fixed[2*2] = { 0, 0, 0, 0};
-matrix_type Adata[2*2] = { 0, 0, 0, 0};
-matrix_type I_2_fixed[2*2];
-matrix_type I_2_data[2*2] = { 1, 0, 0, 1 };
-matrix_type F_data[2*2] = { 0, 0, 0, 0};
-matrix_type F_Ts_data[2*2] =  { 0, 0, 0, 0};
-matrix_type G_data[2*3] = { 0, 0, 0, 0, 0, 0};
-
-matrix_type Fdata_fixed[2 * 3];
-matrix_type K_fixed[2 * 3];
-matrix_type Bdata[2*3];
-matrix_type Bdata_fixed[2 * 3];
-
-
-float x_ref[2*1] = {.5 , .5} ;
-float Kdata[2*3] = {0.6667, -0.3333, -0.3333, 0, 0.5774, -0.5774 };
-
-
-float Adata[2*2] = {0.7985, 0, 0,  0.7985};
-float Bdata[2*3] = {0.1791, -0.0895, -0.0895, 0, 0.1551, -0.1551};
-float xkdata[2 * 1] = { 0.0, 0.0 };
-float ukdata[1*3] = { 0.0, 0.0, 0.0 };
-float xrefdata[2*1] = { 0.5, 0.5 };
-float idata[3*1];
-
-int ialfa[200]; int ibeta[200]; volatile int kindex;
-
-matrix_t A = {2, 2, Adata};
-matrix_t B = {2, 3, Bdata};
-matrix_t K = {2, 3, Kdata};
-matrix_t Iabc = {3, 1, idata};
-
+matrix_t A = {2, 2, Adata_fixed};
+matrix_t B = {2, 3, Bdata_fixed};
 matrix_t xk = {2, 1, xkdata};
 matrix_t uk = {3, 1, ukdata};
-matrix_t x_ref = {2, 1, xrefdata};
+matrix_t x_ref = {2, 1, xrefdata_fixed};
 
-#define NumberOfStates 7
-const float switch_state[NumberOfStates][3] = {
-    {0, 0, 0},  // 0
-    {0, 0, 1},  // 1
-    {0, 1, 0},  // 2
-    {0, 1, 1},  // 3
-    {1, 0, 0},  // 4
-    {1, 1, 0},  // 5
-    {1, 0, 1}   // 6
+matrix_t K = {2,3, Kdata_fixed};
+
+const matrix_type switch_state[NumberOfStates][3] = {
+	{0, 0, 0},  // 0
+	{0, 0, 1},  // 1
+	{0, 1, 0},  // 2
+	{0, 1, 1},  // 3
+	{1, 0, 0},  // 4
+	{1, 1, 0},  // 5
+	{1, 0, 1}   // 6
 };
+
+
 
 void App()
 {
@@ -109,26 +70,29 @@ void App()
 }
 
 
-unsigned int selectBestCombination() {
-	float guk;
-	float lambda = 0.01;   // switch
 
-	float g_idata[2*1]= {0, 0};
+unsigned int selectBestCombination() {
+	int min_index = 0;
+
+
+	matrix_type guk;
+	matrix_type lambda = 41;   // switch
+
+	matrix_type g_idata[2*1]= {0, 0};
 	matrix_t g_i = {2, 1, g_idata};
 
-	float g_udata[1*3]= {0, 0, 0};
+	matrix_type g_udata[1*3]= {0, 0, 0};
 	matrix_t g_u = {3, 1, g_udata};
 
-	float x_pdata[2 * 1] = { 0, 0 };
+	matrix_type x_pdata[2 * 1] = { 0, 0 };
 	matrix_t x_p = { 2, 1, x_pdata };
 
-	float u_pdata[3 * 1] = { 0, 0, 0 };
+	matrix_type u_pdata[3 * 1] = { 0, 0, 0 };
 	matrix_t u_p = { 3, 1, u_pdata };
 
-	float min_g = 1000000.0;
-	int min_index = 0;
-	float g_i_norm = 0.0;
-	float g_u_norm = 0.0;
+	matrix_type min_g = 2147483647;
+	matrix_type g_i_norm = 0;
+	matrix_type g_u_norm = 0;
 
 	for (unsigned int combination = 0; combination < NumberOfStates; ++combination)
 	{
@@ -157,6 +121,9 @@ unsigned int selectBestCombination() {
 			min_index = combination;
 		}
 	}
+
 	return min_index;
 }
+
+
 

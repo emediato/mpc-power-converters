@@ -13,17 +13,6 @@ inline float fixed_to_float(fixed_point_t value){
     return (float)value / (float)(1<< FRACTIONAL_BITS);
 }
 
-// Function to free matrix memory
-void freeMatrix(matrix_t *matrix) {
-    free(matrix->data);
-    matrix->data = NULL;
-}
-
-// Function to set a value in the matrix
-void setMatrixValue(matrix_t *matrix, uint16_t row, uint16_t col, matrix_type value) {
-    matrix->data[row * matrix->cols + col] = value;
-}
-
 
 matrix_t* matrixNew(uint16_t rows, uint16_t cols, matrix_type base)
 {
